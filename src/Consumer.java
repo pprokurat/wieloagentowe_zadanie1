@@ -3,11 +3,16 @@ import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 
 public class Consumer extends Agent {
 
     Long sleepTime;
+
+    List<String> myList = new LinkedList<String>();
 
     public Consumer() {
 
@@ -21,7 +26,7 @@ public class Consumer extends Agent {
     @Override
     protected void setup(){
         Random rand = new Random();
-        sleepTime = (long) (rand.nextInt(10000) + 1000);
+        sleepTime = (long) (rand.nextInt(2000) + 1000);
 
         addBehaviour(new TickerBehaviour(this,sleepTime) {
             @Override
@@ -32,7 +37,14 @@ public class Consumer extends Agent {
                 send(msgSent);
                 ACLMessage msgReceived = receive();
                 if(msgReceived!=null){
-                    System.out.println(msgReceived.getContent());
+                    if(!msgReceived.getContent().equals("noTokensLeft")){
+                        myList.add(msgReceived.getContent());
+                        System.out.println(msgReceived.getContent()+", agent "+msgSent.getSender().getLocalName());
+                    }
+                    else{
+                        System.out.println("Agent "+msgSent.getSender().getLocalName()+" pobrał "+myList.size()+" tokenów");
+                        stop();
+                    }
                 }else block();
             }
         });

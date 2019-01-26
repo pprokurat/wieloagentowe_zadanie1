@@ -1,6 +1,7 @@
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 
 import java.util.LinkedList;
@@ -10,7 +11,7 @@ import java.util.Queue;
 public class Producer extends Agent {
 
     Long miliseconds = (long) 20;
-    int maxTokens = 100;
+    int maxTokens = 30;
 
     public Producer() {
 
@@ -19,7 +20,10 @@ public class Producer extends Agent {
     Queue<String> myQueue = new LinkedList<String>();
 
     private void generateTokens(Long sleepTime) throws InterruptedException {
-        int i = 1;
+        myQueue.offer("token1");
+        myQueue.offer("token2");
+        myQueue.offer("token3");
+        int i = 4;
         String s;
         while (i <= maxTokens) {
             myQueue.offer("token" + i);
@@ -47,17 +51,20 @@ public class Producer extends Agent {
                     if(msgReceived.getContent().equals("getToken")) {
                         ACLMessage msgSent = new ACLMessage(ACLMessage.INFORM);
                         if(!myQueue.isEmpty()){
-                            msgSent.setContent(myQueue.poll());
-                            AID sender = msgReceived.getSender();
-                            String senderString = sender.getLocalName();
-                            senderString = senderString.split("@")[0];
-                            msgSent.addReceiver(new AID(senderString,AID.ISLOCALNAME));
-                            send(msgSent);
+                            msgSent.setContent(myQueue.poll());                                                    }
+                        else{
+                            msgSent.setContent("noTokensLeft");
                         }
+                        AID sender = msgReceived.getSender();
+                        String senderString = sender.getLocalName();
+                        senderString = senderString.split("@")[0];
+                        msgSent.addReceiver(new AID(senderString,AID.ISLOCALNAME));
+                        send(msgSent);
                     }
                 }else block();
             }
         });
+
     }
 
 }
