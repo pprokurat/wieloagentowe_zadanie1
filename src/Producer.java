@@ -10,8 +10,9 @@ import java.util.Queue;
 
 public class Producer extends Agent {
 
-    Long miliseconds = (long) 20;
-    int maxTokens = 30;
+    Long miliseconds = (long) 1200;
+    int maxTokens = 40;
+    boolean reachedMaxTokens = false;
 
     public Producer() {
 
@@ -21,26 +22,37 @@ public class Producer extends Agent {
 
     private void generateTokens(Long sleepTime) throws InterruptedException {
         myQueue.offer("token1");
+        System.out.println("Generated token 1");
         myQueue.offer("token2");
+        System.out.println("Generated token 2");
         myQueue.offer("token3");
+        System.out.println("Generated token 3");
         int i = 4;
         String s;
         while (i <= maxTokens) {
             myQueue.offer("token" + i);
-            s = myQueue.peek();
-            System.out.println("Generated "+s);
+            // = myQueue.peek();
+            System.out.println("Generated token "+i);
             i++;
             Thread.sleep(miliseconds);
         }
+        reachedMaxTokens = true;
     }
 
     @Override
     protected void setup() {
-        try {
-            generateTokens(miliseconds);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    generateTokens(miliseconds);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        t1.start();
 
 
         addBehaviour(new CyclicBehaviour() {
@@ -51,8 +63,12 @@ public class Producer extends Agent {
                     if(msgReceived.getContent().equals("getToken")) {
                         ACLMessage msgSent = new ACLMessage(ACLMessage.INFORM);
                         if(!myQueue.isEmpty()){
-                            msgSent.setContent(myQueue.poll());                                                    }
-                        else{
+                            msgSent.setContent(myQueue.poll());
+                        }
+                        else if (myQueue.isEmpty()&&reachedMaxTokens==false){
+                            msgSent.setContent("noTokens");
+                        }
+                        else if (myQueue.isEmpty()&&reachedMaxTokens==true){
                             msgSent.setContent("noTokensLeft");
                         }
                         AID sender = msgReceived.getSender();

@@ -19,14 +19,9 @@ public class Consumer extends Agent {
     }
 
     @Override
-    public void doWait(long millis) {
-        super.doWait(millis);
-    }
-
-    @Override
     protected void setup(){
         Random rand = new Random();
-        sleepTime = (long) (rand.nextInt(2000) + 1000);
+        sleepTime = (long) (rand.nextInt(3000) + 2000);
 
         addBehaviour(new TickerBehaviour(this,sleepTime) {
             @Override
@@ -37,11 +32,14 @@ public class Consumer extends Agent {
                 send(msgSent);
                 ACLMessage msgReceived = receive();
                 if(msgReceived!=null){
-                    if(!msgReceived.getContent().equals("noTokensLeft")){
+                    if(!msgReceived.getContent().equals("noTokens")&&!msgReceived.getContent().equals("noTokensLeft")){
                         myList.add(msgReceived.getContent());
-                        System.out.println(msgReceived.getContent()+", agent "+msgSent.getSender().getLocalName());
+                        System.out.println("Consumed "+msgReceived.getContent()+", agent "+msgSent.getSender().getLocalName());
                     }
-                    else{
+                    else if (msgReceived.getContent().equals("noTokens")){
+                        block();
+                    }
+                    else if (msgReceived.getContent().equals("noTokensLeft")){
                         System.out.println("Agent "+msgSent.getSender().getLocalName()+" pobrał "+myList.size()+" tokenów");
                         stop();
                     }
